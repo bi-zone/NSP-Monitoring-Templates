@@ -1,0 +1,1080 @@
+zabbix_export:
+  templates:
+  - uuid: 8c17d39373a941f787c635006093c9c2
+    template: BI.ZONE Secure SD-WAN. CyberEdge
+    name: BI.ZONE Secure SD-WAN. CyberEdge
+    groups:
+    - name: BI.ZONE Secure SD-WAN
+    items:
+    - uuid: dfe8253842774c308390f9b64ec7f552
+      name: Host availiablilty
+      type: DEPENDENT
+      key: cpe.avail.status
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - up
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+      triggers:
+      - uuid: b3b30dd2595d44df9ed8f00a93344bf5
+        expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.avail.status,#5)=0
+        recovery_mode: RECOVERY_EXPRESSION
+        recovery_expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.avail.status,#5)=1
+        name: HostDown
+        priority: HIGH
+        description: |-
+          More details:
+          {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+    - uuid: 2bf729c83bd2431a8b81459aaad85da7
+      name: 'Conntrack sessions: MAX'
+      type: DEPENDENT
+      key: cpe.conntr.ses.max
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - collectd_conntrack{conntrack="max"}
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+    - uuid: ae3e4616de3a46d9bbd8bc486fd70077
+      name: 'Conntrack sessions: usage %'
+      type: DEPENDENT
+      key: cpe.contr.ses.percent
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - collectd_conntrack_percent
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+      triggers:
+      - uuid: da38dd0b23444ca49eeae365d249fcd1
+        expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.contr.ses.percent)>60
+        name: HostLocalSessionRateIncreased
+        priority: WARNING
+        description: |-
+          Local session limit is > 60%
+
+          More details:
+          {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+    - uuid: a02be286f49b4bcb988c74178d142047
+      name: 'CPU: idle'
+      type: DEPENDENT
+      key: cpe.cpu.idle
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_cpu_percent$", cpu=~".+", exported_type="idle"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      master_item:
+        key: get.cpe.metrics
+      triggers:
+      - uuid: f622eb4848a04e5d87dad0e06430c5bb
+        expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.cpu.idle,#5)<20
+        name: HostCriticalCpuLoad
+        priority: HIGH
+        description: |-
+          CPU usage > 80%
+
+          More details:
+          {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+      - uuid: 880ea0f44c5a4a1aaea781abebf95832
+        expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.cpu.idle,#5)<40
+        name: HostHighCpuLoad
+        priority: WARNING
+        description: |-
+          CPU usage > 60%
+
+          More details:
+          {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+        dependencies:
+        - name: HostCriticalCpuLoad
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.cpu.idle,#5)<20
+    - uuid: 0004dcbc67d74a2399e894d3f30666b1
+      name: 'CPU: interrupt'
+      type: DEPENDENT
+      key: cpe.cpu.intr
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_cpu_percent$", cpu=~".+", exported_type="interrupt"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      master_item:
+        key: get.cpe.metrics
+    - uuid: b19d2dabf0ac412e89f7a644250d023d
+      name: 'CPU: nice'
+      type: DEPENDENT
+      key: cpe.cpu.nice
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_cpu_percent$", cpu=~".+", exported_type="nice"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      master_item:
+        key: get.cpe.metrics
+    - uuid: 537f11ad3dec4a6db934cfd95d72ffa4
+      name: 'CPU: softirq'
+      type: DEPENDENT
+      key: cpe.cpu.softirq
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_cpu_percent$", cpu=~".+", exported_type="softirq"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      master_item:
+        key: get.cpe.metrics
+    - uuid: e20412181a0b471e807d7cc302ed924a
+      name: 'CPU: steal'
+      type: DEPENDENT
+      key: cpe.cpu.steal
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_cpu_percent$", cpu=~".+", exported_type="steal"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      master_item:
+        key: get.cpe.metrics
+    - uuid: b2cdb45de6df43b289a5278f4bfc3dd7
+      name: 'CPU: system'
+      type: DEPENDENT
+      key: cpe.cpu.sys
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_cpu_percent$", cpu=~".+", exported_type="system"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      master_item:
+        key: get.cpe.metrics
+    - uuid: fa502807549643d98b8ebf8f7f0e6048
+      name: 'CPU: user'
+      type: DEPENDENT
+      key: cpe.cpu.usr
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_cpu_percent$", cpu=~".+", exported_type="user"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      master_item:
+        key: get.cpe.metrics
+    - uuid: 2cf7032160554f418c629542bc14f9c3
+      name: 'CPU: wait'
+      type: DEPENDENT
+      key: cpe.cpu.wait
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_cpu_percent$", cpu=~".+", exported_type="wait"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      master_item:
+        key: get.cpe.metrics
+    - uuid: a6eab513321d43ab915f58ad7aec1dfc
+      name: 'Memory: buffered'
+      type: DEPENDENT
+      key: cpe.mem.buff
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - collectd_memory{memory="buffered"}
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+    - uuid: 653c33da6a3c4e649bf0c43a8ef85ebd
+      name: 'Memory: cached'
+      type: DEPENDENT
+      key: cpe.mem.cach
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - collectd_memory{memory="cached"}
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+    - uuid: 21b2316cb0ff438a9e0b6294aa498bc7
+      name: 'Memory: free'
+      type: DEPENDENT
+      key: cpe.mem.free
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - collectd_memory{memory="free"}
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+    - uuid: c039e419bac24864aa91c73964506ad7
+      name: 'Memory: slab_recl'
+      type: DEPENDENT
+      key: cpe.mem.slre
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - collectd_memory{memory="slab_recl"}
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+    - uuid: a439765dd6214e75b8d9adf5e7681321
+      name: 'Memory: slab_unrecl'
+      type: DEPENDENT
+      key: cpe.mem.slun
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - collectd_memory{memory="slab_unrecl"}
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+    - uuid: 296d3fd390a8406d89c12f1bfadd80f3
+      name: 'Memory: total'
+      type: CALCULATED
+      key: cpe.mem.total
+      history: 7d
+      value_type: FLOAT
+      units: B
+      params: last(//cpe.mem.cach) + last(//cpe.mem.free) + last(//cpe.mem.buff) + last(//cpe.mem.used)
+    - uuid: adbcb64a67814b3ab9190268b11bc50b
+      name: 'Memory: used'
+      type: DEPENDENT
+      key: cpe.mem.used
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - collectd_memory{memory="used"}
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+    - uuid: 5f04a99170bc4a08b550757938fd806e
+      name: 'Memory: used %'
+      type: CALCULATED
+      key: cpe.mem.used.perc
+      history: 7d
+      value_type: FLOAT
+      params: last(//cpe.mem.used) / last(//cpe.mem.total) * 100
+      triggers:
+      - uuid: a4b01159bcb548ddac7f156426458427
+        expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.mem.used.perc,#5)>60
+        name: HostLowMemory
+        priority: WARNING
+        description: |-
+          Memory usage > 60%
+
+          More details:
+          {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+        dependencies:
+        - name: HostOutOfMemory
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.mem.used.perc,#5)>80
+      - uuid: c72231c0b3884c6aa7e5594acea91862
+        expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.mem.used.perc,#5)>80
+        name: HostOutOfMemory
+        priority: HIGH
+        description: |-
+          Memory usage > 80%
+
+          More details:
+          {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+    - uuid: e82ec2af4fd445f49f54bc19a13059fc
+      name: Uptime
+      type: DEPENDENT
+      key: cpe.uptime
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - collectd_uptime
+        - value
+        - ''
+      master_item:
+        key: get.cpe.metrics
+      triggers:
+      - uuid: cf2dc5e5df9a43d582b9931efa421149
+        expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.uptime,#1)<100
+        name: HostWasRebooted
+        priority: INFO
+        description: |-
+          Uptime of host was reset to 0.
+
+          More details:
+          {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+    - uuid: b43d41352c6a441798cbe4b10c74ac61
+      name: Get CPE metrics
+      type: HTTP_AGENT
+      key: get.cpe.metrics
+      history: '0'
+      trends: '0'
+      value_type: TEXT
+      timeout: 30s
+      url: '{$PROTO}://mon.{$DOMAIN}/mon/cpe-metrics'
+      query_fields:
+      - name: match[]
+        value: '{job="node",kind="cpe",cpe_id="{$CPE_ID}"}'
+      ssl_cert_file: '{$SSL_CERT}'
+      ssl_key_file: '{$SSL_KEY}'
+    discovery_rules:
+    - uuid: e21e944d08d64aee99fc279fc6658106
+      name: Network interface discovery (bzmon)
+      type: DEPENDENT
+      key: bz.net.discov
+      delay: '0'
+      filter:
+        evaltype: AND
+        conditions:
+        - macro: '{#BZMON_INTERFACE_NAME}'
+          value: (lo|wan1 [A-Z0-9]{15}|wan2 [A-Z0-9]{15}|^ lan$|dp_wan)
+          operator: NOT_MATCHES_REGEX
+          formulaid: A
+      item_prototypes:
+      - uuid: 572030d4e33f403f8dafff8f7ca51dba
+        name: 'Network: Collisions on {#BZMON_INTERFACE_NAME}'
+        type: DEPENDENT
+        key: net.collsn[{#BZMON_INTERFACE_NAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_bzmon_if_collisions_total{bzmon=~"{#BZMON_INTERFACE_NAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: 25d2eed6579c4bfe862a36e9474a41a6
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/net.collsn[{#BZMON_INTERFACE_NAME}],#5)>0
+          name: HostNetworkColllisions
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{$CPE_ID}/dashboard
+      - uuid: 57df5649161f4ba8b4d03d6ab3abda98
+        name: 'Network: IN drops on {#BZMON_INTERFACE_NAME}'
+        type: DEPENDENT
+        key: net.in.drop[{#BZMON_INTERFACE_NAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_bzmon_if_dropped_rx_total{bzmon=~"{#BZMON_INTERFACE_NAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: ec74ae243f9f4fc78a739a83b8b5d2de
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/net.in.drop[{#BZMON_INTERFACE_NAME}],#5)>10
+          name: HostNetworkDropsIN
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+      - uuid: 0c903b3726ae4e7e9c7727c4849c1055
+        name: 'Network: IN errors on {#BZMON_INTERFACE_NAME}'
+        type: DEPENDENT
+        key: net.in.err[{#BZMON_INTERFACE_NAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_bzmon_if_errors_rx_total{bzmon=~"{#BZMON_INTERFACE_NAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: 8a47a7073e68445ea3e00f58f9f9a784
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/net.in.err[{#BZMON_INTERFACE_NAME}],#5)>0
+          name: HostNetworkErrorsIN
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{$CPE_ID}/dashboard
+      - uuid: 19107bc9c0f64b5d84d907a6ad1f0b05
+        name: 'Network: OUT drops on {#BZMON_INTERFACE_NAME}'
+        type: DEPENDENT
+        key: net.out.drop[{#BZMON_INTERFACE_NAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_bzmon_if_dropped_tx_total{bzmon=~"{#BZMON_INTERFACE_NAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: 9b0604f393d8438f9f35b90ec3fca81a
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/net.out.drop[{#BZMON_INTERFACE_NAME}],#5)>10
+          name: HostNetworkDropsOUT
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+      - uuid: f4af66ebc4c7493ea6c89054ab2b7c1d
+        name: 'Network: OUT errors on {#BZMON_INTERFACE_NAME}'
+        type: DEPENDENT
+        key: net.out.err[{#BZMON_INTERFACE_NAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_bzmon_if_errors_tx_total{bzmon=~"{#BZMON_INTERFACE_NAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: 78205dd0a6ff4e7cae9606b28f9dd99a
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/net.out.err[{#BZMON_INTERFACE_NAME}],#5)>0
+          name: HostNetworkErrorsOUT
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{$CPE_ID}/dashboard
+      - uuid: f3a8b2c1d4e5476980a1b2c3d4e5f601
+        name: 'Network: input traffic raw octets on {#BZMON_INTERFACE_NAME}'
+        type: DEPENDENT
+        key: net.trfc.in.raw[{#BZMON_INTERFACE_NAME}]
+        delay: '0'
+        history: 7d
+        trends: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_bzmon_if_octets_rx_total{bzmon=~"{#BZMON_INTERFACE_NAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+      - uuid: f3a8b2c1d4e5476980a1b2c3d4e5f602
+        name: 'Network: output traffic raw octets on {#BZMON_INTERFACE_NAME}'
+        type: DEPENDENT
+        key: net.trfc.out.raw[{#BZMON_INTERFACE_NAME}]
+        delay: '0'
+        history: 7d
+        trends: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_bzmon_if_octets_tx_total{bzmon=~"{#BZMON_INTERFACE_NAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+      - uuid: f3a8b2c1d4e5476980a1b2c3d4e5f603
+        name: 'Network: input traffic rate on {#BZMON_INTERFACE_NAME}'
+        type: CALCULATED
+        key: net.trfc.in.rate[{#BZMON_INTERFACE_NAME}]
+        delay: 1m
+        history: 7d
+        value_type: FLOAT
+        units: bps
+        params: (last(//net.trfc.in.raw[{#BZMON_INTERFACE_NAME}])-last(//net.trfc.in.raw[{#BZMON_INTERFACE_NAME}],#4))*8/180
+      - uuid: f3a8b2c1d4e5476980a1b2c3d4e5f604
+        name: 'Network: output traffic rate on {#BZMON_INTERFACE_NAME}'
+        type: CALCULATED
+        key: net.trfc.out.rate[{#BZMON_INTERFACE_NAME}]
+        delay: 1m
+        history: 7d
+        value_type: FLOAT
+        units: bps
+        params: (last(//net.trfc.out.raw[{#BZMON_INTERFACE_NAME}])-last(//net.trfc.out.raw[{#BZMON_INTERFACE_NAME}],#4))*8/180
+      graph_prototypes:
+      - uuid: c4d5e6f7a8b94012a3b4c5d6e7f80901
+        name: 'Network: traffic rate on {#BZMON_INTERFACE_NAME}'
+        graph_items:
+        - sortorder: '1'
+          color: 1A7C11
+          item:
+            host: BI.ZONE Secure SD-WAN. CyberEdge
+            key: net.trfc.out.rate[{#BZMON_INTERFACE_NAME}]
+        - sortorder: '2'
+          color: 0040FF
+          item:
+            host: BI.ZONE Secure SD-WAN. CyberEdge
+            key: net.trfc.in.rate[{#BZMON_INTERFACE_NAME}]
+      master_item:
+        key: get.cpe.metrics
+      lld_macro_paths:
+      - lld_macro: '{#BZMON_INTERFACE_NAME}'
+        path: $.labels['bzmon']
+      - lld_macro: '{#CPE_ID}'
+        path: $.labels['cpe_id']
+      - lld_macro: '{#ERROR_TYPE}'
+        path: $.labels['exported_type']
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_bzmon_if"}'
+      - type: STR_REPLACE
+        parameters:
+        - lan0 lan LAN
+        - lan0
+      - type: STR_REPLACE
+        parameters:
+        - wan1 wan1 WAN1
+        - wan1
+      - type: STR_REPLACE
+        parameters:
+        - wan2 wan2 WAN2
+        - wan2
+    - uuid: 0f8a7c2d6b5149a3a7c9e2d4f6b8a1c3
+      name: Physical interface discovery
+      type: DEPENDENT
+      key: phys.net.discov
+      delay: '0'
+      filter:
+        evaltype: AND
+        conditions:
+        - macro: '{#PHYS_IFNAME}'
+          value: ^eth[0-9]+$
+          formulaid: A
+      item_prototypes:
+      - uuid: 677c1f2f654b4398b49f0657815df42b
+        name: 'Physical interface {#PHYS_IFNAME}: Collisions'
+        type: DEPENDENT
+        key: phys.net.collsn[{#PHYS_IFNAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_interface_if_collisions_total{interface="{#PHYS_IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: 937babd685ab479385caac3f9ef34751
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/phys.net.collsn[{#PHYS_IFNAME}],#5)>0
+          name: HostPhysicalNetworkColllisions
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{$CPE_ID}/dashboard
+      - uuid: 89b224d21e2e41cb91dbc0db5f3effc4
+        name: 'Physical interface {#PHYS_IFNAME}: IN drops'
+        type: DEPENDENT
+        key: phys.net.in.drop[{#PHYS_IFNAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_interface_if_dropped_rx_total{interface="{#PHYS_IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: 822a36cb25eb4244a241c0c4db12894f
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/phys.net.in.drop[{#PHYS_IFNAME}],#5)>10
+          name: HostPhysicalNetworkDropsIN
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+      - uuid: 434791ffd7d24d9fafe1e5f3e56c2b07
+        name: 'Physical interface {#PHYS_IFNAME}: IN errors'
+        type: DEPENDENT
+        key: phys.net.in.err[{#PHYS_IFNAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_interface_if_errors_rx_total{interface="{#PHYS_IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: 3eb457ec9b23443898898e1e246bae96
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/phys.net.in.err[{#PHYS_IFNAME}],#5)>0
+          name: HostPhysicalNetworkErrorsIN
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{$CPE_ID}/dashboard
+      - uuid: 22a050fc6da442149961db183fdad28a
+        name: 'Physical interface {#PHYS_IFNAME}: OUT drops'
+        type: DEPENDENT
+        key: phys.net.out.drop[{#PHYS_IFNAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_interface_if_dropped_tx_total{interface="{#PHYS_IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: b7dffb88c5c94933b6794040e30a808d
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/phys.net.out.drop[{#PHYS_IFNAME}],#5)>10
+          name: HostPhysicalNetworkDropsOUT
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{#CPE_ID}/dashboard
+      - uuid: 7dff9fd00c304a86ba77b61473429960
+        name: 'Physical interface {#PHYS_IFNAME}: OUT errors'
+        type: DEPENDENT
+        key: phys.net.out.err[{#PHYS_IFNAME}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_interface_if_errors_tx_total{interface="{#PHYS_IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: fcc2884fac5d4fc5aa95413b85d68e12
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/phys.net.out.err[{#PHYS_IFNAME}],#5)>0
+          name: HostPhysicalNetworkErrorsOUT
+          priority: WARNING
+          description: |-
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{$CPE_ID}/dashboard
+      - uuid: ad8a4d7d51c54f71899b7cc3b351a001
+        name: 'Physical interface {#PHYS_IFNAME}: input traffic raw octets'
+        type: DEPENDENT
+        key: phys.net.trfc.in.raw[{#PHYS_IFNAME}]
+        delay: '0'
+        history: 7d
+        trends: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_interface_if_octets_rx_total{interface="{#PHYS_IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+      - uuid: bc97a1a09a4f46319638e0fb7c2a1002
+        name: 'Physical interface {#PHYS_IFNAME}: output traffic raw octets'
+        type: DEPENDENT
+        key: phys.net.trfc.out.raw[{#PHYS_IFNAME}]
+        delay: '0'
+        history: 7d
+        trends: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_interface_if_octets_tx_total{interface="{#PHYS_IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+      - uuid: d61fd5ecb9f14d9aa37f13e8751f9c41
+        name: 'Physical interface {#PHYS_IFNAME}: input traffic rate'
+        type: CALCULATED
+        key: phys.net.trfc.in.rate[{#PHYS_IFNAME}]
+        delay: 1m
+        history: 7d
+        value_type: FLOAT
+        units: bps
+        params: (last(//phys.net.trfc.in.raw[{#PHYS_IFNAME}])-last(//phys.net.trfc.in.raw[{#PHYS_IFNAME}],#4))*8/180
+      - uuid: e69af2e4a8ef47c7a92b41d1f7f28436
+        name: 'Physical interface {#PHYS_IFNAME}: output traffic rate'
+        type: CALCULATED
+        key: phys.net.trfc.out.rate[{#PHYS_IFNAME}]
+        delay: 1m
+        history: 7d
+        value_type: FLOAT
+        units: bps
+        params: (last(//phys.net.trfc.out.raw[{#PHYS_IFNAME}])-last(//phys.net.trfc.out.raw[{#PHYS_IFNAME}],#4))*8/180
+      graph_prototypes:
+      - uuid: 605b66a44e6042d09eee5f53a17834b2
+        name: 'Physical interface: traffic rate on {#PHYS_IFNAME}'
+        graph_items:
+        - sortorder: '1'
+          color: 1A7C11
+          item:
+            host: BI.ZONE Secure SD-WAN. CyberEdge
+            key: phys.net.trfc.out.rate[{#PHYS_IFNAME}]
+        - sortorder: '2'
+          color: 0040FF
+          item:
+            host: BI.ZONE Secure SD-WAN. CyberEdge
+            key: phys.net.trfc.in.rate[{#PHYS_IFNAME}]
+      master_item:
+        key: get.cpe.metrics
+      lld_macro_paths:
+      - lld_macro: '{#PHYS_IFNAME}'
+        path: $.labels['interface']
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^collectd_interface_if"}'
+    - uuid: da6e65566c754a4f84dbcbc5b9da07eb
+      name: Filesystem discovery
+      type: DEPENDENT
+      key: filesystem.discov
+      delay: '0'
+      filter:
+        conditions:
+        - macro: '{#MOUNT_POINT}'
+          value: ^tmp$|^overlay$|tmp-crt_keys_data|tmp-downloads
+          formulaid: A
+      item_prototypes:
+      - uuid: 914d044977004a8a976f0e31bd844d31
+        name: Free space of /{#MOUNT_POINT}
+        type: DEPENDENT
+        key: cpe.free.fs[{#MOUNT_POINT}]
+        delay: '0'
+        value_type: FLOAT
+        units: '%'
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_df_percent_bytes{df="{#MOUNT_POINT}", exported_type="free"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+      - uuid: da7123b19ba348429c8de02b073cbe5e
+        name: Used space of /{#MOUNT_POINT}
+        type: DEPENDENT
+        key: cpe.used.fs[{#MOUNT_POINT}]
+        delay: '0'
+        value_type: FLOAT
+        units: '%'
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_df_percent_bytes{df="{#MOUNT_POINT}", exported_type="used"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: 0595e2c0e6c142e7aa953221d40eedd8
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.used.fs[{#MOUNT_POINT}],#1)>60
+          name: HostLowDiskSpace
+          opdata: Usage of /{#MOUNT_POINT} more 60%
+          priority: WARNING
+          description: |-
+            Usage of /{#MOUNT_POINT} > 60%
+
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{$CPE_ID}/dashboard
+          dependencies:
+          - name: HostOutOfDiskSpace
+            expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.used.fs[{#MOUNT_POINT}],#1)>80
+        - uuid: b2aa8a36d1754c60856883cda5be61cb
+          expression: last(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.used.fs[{#MOUNT_POINT}],#1)>80
+          name: HostOutOfDiskSpace
+          opdata: Usage of /{#MOUNT_POINT} more 80%
+          priority: HIGH
+          description: |-
+            Usage of /{#MOUNT_POINT} > 80%
+
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{$CPE_ID}/dashboard
+      graph_prototypes:
+      - uuid: a8fd8b9f019d472a826c4e0f99d3cc1a
+        name: Space for mount point /{#MOUNT_POINT}
+        yaxismax: '0'
+        show_work_period: 'NO'
+        show_triggers: 'NO'
+        type: PIE
+        show_3d: 'YES'
+        graph_items:
+        - sortorder: '1'
+          color: 1A7C11
+          calc_fnc: LAST
+          item:
+            host: BI.ZONE Secure SD-WAN. CyberEdge
+            key: cpe.free.fs[{#MOUNT_POINT}]
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: LAST
+          item:
+            host: BI.ZONE Secure SD-WAN. CyberEdge
+            key: cpe.used.fs[{#MOUNT_POINT}]
+      master_item:
+        key: get.cpe.metrics
+      lld_macro_paths:
+      - lld_macro: '{#CPE_ID}'
+        path: $.labels['cpe_id']
+      - lld_macro: '{#FILESYSTEM_TYPE}'
+        path: $.labels['exported_type']
+      - lld_macro: '{#MOUNT_POINT}'
+        path: $.labels['df']
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"collectd_df"}'
+    - uuid: f7eb26e9a00b44e19aec77dfb61a69b9
+      name: System processes
+      type: DEPENDENT
+      key: proc.discov
+      delay: '0'
+      item_prototypes:
+      - uuid: f4ca8d378b9a4e609a844169e57f7afc
+        name: 'Process: {#PROCESS}'
+        type: DEPENDENT
+        key: cpe.sys.proc[{#PROCESS}]
+        delay: '0'
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - collectd_processes_ps_state{cpe_id="{$CPE_ID}", processes="{#PROCESS}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.metrics
+        trigger_prototypes:
+        - uuid: c45df0edb7d941e19129d61c8d5a4caa
+          expression: avg(/BI.ZONE Secure SD-WAN. CyberEdge/cpe.sys.proc[{#PROCESS}],60s) * 10 < avg(/BI.ZONE Secure
+            SD-WAN. CyberEdge/cpe.sys.proc[{#PROCESS}],#3)
+          name: HostIncreaseOfProcesses
+          priority: WARNING
+          description: |-
+            Increase of process amount {#PROCESS} > 10-X
+
+            More details:
+            {$PROTO}://ui.{$DOMAIN}/ui/networking/cpes/{$CPE_ID}/dashboard
+      graph_prototypes:
+      - uuid: ac58f1a758e7495bb566b068722570e8
+        name: 'Processes: {#PROCESS}'
+        show_triggers: 'NO'
+        graph_items:
+        - sortorder: '1'
+          color: AC8C14
+          item:
+            host: BI.ZONE Secure SD-WAN. CyberEdge
+            key: cpe.sys.proc[{#PROCESS}]
+      master_item:
+        key: get.cpe.metrics
+      lld_macro_paths:
+      - lld_macro: '{#CPE_ID}'
+        path: $.labels['cpe_id']
+      - lld_macro: '{#PROCESS}'
+        path: $.labels['processes']
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"collectd_processes_ps_state"}'
+    macros:
+    - macro: '{$DOMAIN}'
+      value: mon.<example>.com
+    - macro: '{$PROTO}'
+      value: https
+    - macro: '{$SSL_CERT}'
+      value: portal-cert.pem
+    - macro: '{$SSL_KEY}'
+      value: portal-key.pem
+  graphs:
+  - uuid: f2380fc319de46bbb9587081212aa30d
+    name: CPU
+    graph_items:
+    - sortorder: '1'
+      color: 1A7C11
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.cpu.idle
+    - sortorder: '2'
+      color: F63100
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.cpu.intr
+    - sortorder: '3'
+      color: 2774A4
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.cpu.nice
+    - sortorder: '4'
+      color: A54F10
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.cpu.softirq
+    - sortorder: '5'
+      color: FC6EA3
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.cpu.steal
+    - sortorder: '6'
+      color: 6C59DC
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.cpu.sys
+    - sortorder: '7'
+      color: AC8C14
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.cpu.usr
+    - sortorder: '8'
+      color: 611F27
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.cpu.wait
+  - uuid: 183a7061f17144ca991c5c17f1ea59bd
+    name: Memory
+    graph_items:
+    - sortorder: '1'
+      color: 1A7C11
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.mem.buff
+    - sortorder: '2'
+      color: F63100
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.mem.cach
+    - sortorder: '3'
+      color: 2774A4
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.mem.free
+    - sortorder: '4'
+      color: A54F10
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.mem.slre
+    - sortorder: '5'
+      color: FC6EA3
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.mem.slun
+    - sortorder: '6'
+      color: 6C59DC
+      item:
+        host: BI.ZONE Secure SD-WAN. CyberEdge
+        key: cpe.mem.total

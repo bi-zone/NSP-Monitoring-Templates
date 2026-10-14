@@ -1,0 +1,11 @@
+engine: zabbix
+export_version: '6.0'
+status: active
+tested_engine_patch: '6.0.48'
+tested_csp_version: not-tested
+output: dist/zabbix-6.0/CSP_all_templates.xml
+sources:
+  - src/templates/00-group.yaml
+  - src/templates/csp-controller.yaml
+  - src/templates/cyberedge.yaml
+  - src/templates/discovery.yaml

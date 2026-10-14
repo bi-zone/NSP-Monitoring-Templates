@@ -1,0 +1,1613 @@
+zabbix_export:
+  templates:
+  - uuid: 98f3fd7ad7424829be1284b1f8c92579
+    template: BI.ZONE Secure SD-WAN. CSP-controller template
+    name: BI.ZONE Secure SD-WAN. CSP-controller template
+    groups:
+    - name: BI.ZONE Secure SD-WAN
+    items:
+    - uuid: 5eb8c493b0494512a759d1590a272a29
+      name: Version of node_exporter running
+      type: DEPENDENT
+      key: csp.agent.version
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_exporter_build_info
+        - value
+        - ''
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 1d
+      master_item:
+        key: get.csp.metrics
+    - uuid: 9c3959b888434d1bbeff60019b286016
+      name: 'CPU: guest'
+      type: DEPENDENT
+      key: csp.cpu.guest
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      description: Guest  time (time  spent  running  a  virtual  CPU  for  a  guest  operating  system)
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_guest_seconds_total)?$",cpu=~".+",mode=~"^(?:user|guest)$"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: de0503cb1e144ad68a0d62d78ed429a3
+      name: 'CPU: guest nice'
+      type: DEPENDENT
+      key: csp.cpu.guest_nice
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      description: Time spent running a niced guest (virtual CPU for guest operating systems under the control of
+        the Linux kernel)
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_guest_seconds_total)?$",cpu=~".+",mode=~"^(?:nice|guest_nice)$"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: 97c76f24c5cd4b2fab0d778e1fdf721d
+      name: 'CPU: idle'
+      type: DEPENDENT
+      key: csp.cpu.idle
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_seconds_total)?$",cpu=~".+",mode="idle"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: 5cac6c1036184cc6903d598516dec999
+      name: 'CPU: interrupt'
+      type: DEPENDENT
+      key: csp.cpu.interrupt
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      description: The amount of time the CPU has been servicing hardware interrupts.
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_seconds_total)?$",cpu=~".+",mode="irq"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: 42f5395bba1e495f9317de6a565a66db
+      name: Interrupts per second
+      type: DEPENDENT
+      key: csp.cpu.intr
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"node_intr"}'
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: 81b8984af64344008aa6207e32234e06
+      name: 'CPU: iowait'
+      type: DEPENDENT
+      key: csp.cpu.iowait
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      description: Amount of time the CPU has been waiting for I/O to complete.
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_seconds_total)?$",cpu=~".+",mode="iowait"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: 31dd682d22b24ea4b2e1ca4ec422b23e
+      name: Load average (1m avg)
+      type: DEPENDENT
+      key: csp.cpu.load.avg1
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_load1
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: cec4fa64defd47aab5aa90c2a53bf0f1
+      name: Load average (5m avg)
+      type: DEPENDENT
+      key: csp.cpu.load.avg5
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_load5
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: 224971fb5d564f269ccdee9d732a8efb
+      name: Load average (15m avg)
+      type: DEPENDENT
+      key: csp.cpu.load.avg15
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_load15
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: c373ebfa94294db6b12af4de7571c3c5
+      name: 'CPU: nice'
+      type: DEPENDENT
+      key: csp.cpu.nice
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      description: The time the CPU has spent running users' processes that have been niced.
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_seconds_total)?$",cpu=~".+",mode="nice"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: 85bab7e0451d4460b421a4301f6fde72
+      name: Number of CPUs
+      type: DEPENDENT
+      key: csp.cpu.num
+      delay: '0'
+      history: 7d
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_seconds_total)?$",cpu=~".+",mode="idle"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //count the number of cores
+          return JSON.parse(value).length
+      master_item:
+        key: get.csp.metrics
+    - uuid: 1be007f2410b492ca3eb1ba72b9bfdc9
+      name: 'CPU: softirq'
+      type: DEPENDENT
+      key: csp.cpu.softirq
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      description: The amount of time the CPU has been servicing software interrupts.
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_seconds_total)?$",cpu=~".+",mode="softirq"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: 77ded033cfce4f168010b0dc99504659
+      name: 'CPU: steal'
+      type: DEPENDENT
+      key: csp.cpu.steal
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      description: The amount of CPU 'stolen' from this virtual machine by the hypervisor for other tasks (such
+        as running another virtual machine).
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_seconds_total)?$",cpu=~".+",mode="steal"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: 130d44d64c454057b0e6747a0b168f20
+      name: Context switches per second
+      type: DEPENDENT
+      key: csp.cpu.switches
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"node_context_switches"}'
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: 7169e22f8b0743528c29a54b5e219553
+      name: 'CPU: system'
+      type: DEPENDENT
+      key: csp.cpu.system
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      description: The time the CPU has spent running the kernel and its processes.
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_seconds_total)?$",cpu=~".+",mode="system"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: 621bbdbe170a4f939e02db1e358dcd6e
+      name: 'CPU: user'
+      type: DEPENDENT
+      key: csp.cpu.user
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_cpu(?:_seconds_total)?$",cpu=~".+",mode="user"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //calculates average, all cpu utilization
+          var valueArr = JSON.parse(value);
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value'])
+          },0)/valueArr.length;
+      - type: MULTIPLIER
+        parameters:
+        - '100'
+      master_item:
+        key: get.csp.metrics
+    - uuid: a9e07500624d455d86da2667191dbcc2
+      name: CPU utilization
+      type: DEPENDENT
+      key: csp.cpu.util
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      description: CPU utilization in %
+      preprocessing:
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //Calculate utilization
+          return (100 - value)
+      master_item:
+        key: csp.cpu.idle
+      triggers:
+      - uuid: 5afbb19f95234a9cae9baad5e7e680c2
+        expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.cpu.util,#5)>80
+        name: HostCriticalCpuLoad
+        priority: HIGH
+        description: 'CPU: usage more 80%'
+      - uuid: 83ed9672e9f0403eaff7dcb98e322f38
+        expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.cpu.util,#5)>60
+        name: HostHighCpuLoad
+        priority: WARNING
+        description: 'CPU: usage more 60%'
+        dependencies:
+        - name: HostCriticalCpuLoad
+          expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.cpu.util,#5)>80
+    - uuid: ec3c363c258f4a9a938187da0ca6c94e
+      name: Number of open file descriptors
+      type: DEPENDENT
+      key: csp.fd.open
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_filefd_allocated
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: 2e4b9a3037ad4b2c8a4c63a0fd6084b3
+      name: Maximum number of open file descriptors
+      type: DEPENDENT
+      key: csp.krnl.maxfiles
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: It could be increased by using sysctrl utility or modifying file /etc/sysctl.conf.
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_filefd_maximum
+        - value
+        - ''
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 1d
+      master_item:
+        key: get.csp.metrics
+    - uuid: aa4a6cff5473441196015ab83292d273
+      name: 'Memory: available'
+      type: DEPENDENT
+      key: csp.mem.avail
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"node_memory_MemAvailable"}'
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: f735745fee664f35ad1bad3379973305
+      name: 'Memory: total'
+      type: DEPENDENT
+      key: csp.mem.total
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      description: Total memory in Bytes
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"node_memory_MemTotal"}'
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: 80edef31cc7644aeb82439a510424f1b
+      name: 'Memory: utilization %'
+      type: CALCULATED
+      key: csp.mem.util
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      params: (last(//csp.mem.total)-last(//csp.mem.avail)) / last(//csp.mem.total)*100
+      description: Memory used percentage is calculated as (total-available)/total*100
+      triggers:
+      - uuid: f813ff6bf81b48f1bcb40bfe6307e3e0
+        expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.mem.util,#5)>60
+        name: HostLowMemory
+        priority: WARNING
+        description: 'Memory: usage more 60%'
+        dependencies:
+        - name: HostOutOfMemory
+          expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.mem.util,#5)>80
+      - uuid: 264d2ca6ceab41c9b233d5bbbe935b5b
+        expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.mem.util,#5)>80
+        name: HostOutOfMemory
+        priority: HIGH
+        description: 'Memory: usage more 80%'
+    - uuid: 56a11b31606c4a208d6ad369cab3f247
+      name: 'Network: current established connection'
+      type: DEPENDENT
+      key: csp.network.current_established
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_netstat_Tcp_CurrEstab
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: f9659cc450f9481eaf5cc608ad5bcaac
+      name: Is master
+      type: CALCULATED
+      key: csp.node.master
+      params: count(//csp.node.role,#1,"eq",1)
+    - uuid: 15ffaff53a114e4cb381fbce8b2c56c0
+      name: Get node role
+      type: DEPENDENT
+      key: csp.node.role
+      delay: '0'
+      history: 7d
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"csp_manager_node_state_node_role"}'
+        - value
+        - ''
+      master_item:
+        key: get.svc.metrics
+    - uuid: 358332a1448b494c9b8604243dab3279
+      name: Free swap space
+      type: DEPENDENT
+      key: csp.swap.free
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      description: The free space of swap volume/file in bytes.
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"node_memory_SwapFree"}'
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: 0872f3b2f09b475ab2f0bd08bec1dc5e
+      name: Free swap space in %
+      type: CALCULATED
+      key: csp.swap.pfree
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      params: (last(//csp.swap.free)+count(//csp.swap.total,#1,"eq",0))/(last(//csp.swap.total)+count(//csp.swap.total,#1,"eq",0))*100
+      description: The free space of swap volume/file in percent. Returns 100 when swap is not configured.
+    - uuid: 0c1e2216b2b04474a3bae2e4c089826b
+      name: Used swap space in %
+      type: CALCULATED
+      key: csp.swap.pused
+      history: 7d
+      value_type: FLOAT
+      units: '%'
+      params: (last(//csp.swap.total)-last(//csp.swap.free))/(last(//csp.swap.total)+count(//csp.swap.total,#1,"eq",0))*100
+      description: The used space of swap volume/file in percent. Returns 0 when swap is not configured.
+    - uuid: 0836665efb3b4d3e851ff561b2be0c2e
+      name: Total swap space
+      type: DEPENDENT
+      key: csp.swap.total
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: B
+      description: The total space of swap volume/file in bytes.
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"node_memory_SwapTotal"}'
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: 7f0f1c63ad0b4f1980a266b081a6df4b
+      name: System boot time
+      type: DEPENDENT
+      key: csp.system.boottime
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: unixtime
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"^node_boot_time(?:_seconds)?$"}'
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: 35a529210ba04cee9b8c047cb6a51454
+      name: System description
+      type: DEPENDENT
+      key: csp.system.descr
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      description: Labeled system information as provided by the uname system call.
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - node_uname_info
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var info = JSON.parse(value)[0];
+             return info.labels.sysname+' version: '+info.labels.release+' '+info.labels.version
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 1d
+      master_item:
+        key: get.csp.metrics
+    - uuid: 99d2f30697cf452887bbae0d391464ad
+      name: System local time
+      type: DEPENDENT
+      key: csp.system.localtime
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: unixtime
+      description: System local time of the host.
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"^node_time(?:_seconds)?$"}'
+        - value
+        - ''
+      master_item:
+        key: get.csp.metrics
+    - uuid: a166d788dd0b40139cdb264fb12c17b3
+      name: System name
+      type: DEPENDENT
+      key: csp.system.name
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      description: System host name.
+      inventory_link: NAME
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_uname_info
+        - label
+        - nodename
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 1d
+      master_item:
+        key: get.csp.metrics
+    - uuid: 390c2ee1eeee4babb35ee39bbd687ef3
+      name: Operating system architecture
+      type: DEPENDENT
+      key: csp.system.sw.arch
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      description: Operating system architecture of the host.
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_uname_info
+        - label
+        - machine
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 1d
+      master_item:
+        key: get.csp.metrics
+    - uuid: 3455e82443824c649c9ebe484a7900ed
+      name: Operating system
+      type: DEPENDENT
+      key: csp.system.sw.os
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      inventory_link: OS
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - node_uname_info
+        - label
+        - version
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 1d
+      master_item:
+        key: get.csp.metrics
+    - uuid: 4ec4546218ba46fea0d0e8ee56c53189
+      name: System uptime
+      type: DEPENDENT
+      key: csp.system.uptime
+      delay: '0'
+      history: 7d
+      trends: '0'
+      units: uptime
+      description: System uptime in 'N days, hh:mm:ss' format.
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - '{__name__=~"^node_boot_time(?:_seconds)?$"}'
+        - value
+        - ''
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          //use boottime to calculate uptime
+          return (Math.floor(Date.now()/1000)-Number(value));
+      master_item:
+        key: get.csp.metrics
+      triggers:
+      - uuid: 3a72aa1e6aaa4d7a8b3c4cb5ce597b1d
+        expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.system.uptime)<10m
+        name: HostWasRebooted
+        priority: INFO
+        description: The device uptime is less than 10 minutes
+    - uuid: 102cbe507c18421a9080755d7e00ac27
+      name: Get CPE list
+      type: HTTP_AGENT
+      key: get.cpe.list
+      history: '0'
+      trends: '0'
+      value_type: TEXT
+      timeout: 30s
+      url: '{$PROTO}://mon.{$DOMAIN}/mon/cpe-list'
+      ssl_cert_file: '{$SSL_CERT}'
+      ssl_key_file: '{$SSL_KEY}'
+    - uuid: bac2f8ec8ba4408298706e50bd084e43
+      name: Get CSP metrics
+      type: HTTP_AGENT
+      key: get.csp.metrics
+      history: '0'
+      trends: '0'
+      value_type: TEXT
+      timeout: 30s
+      url: '{$PROTO}://mon.{$DOMAIN}/mon/cpe-metrics'
+      query_fields:
+      - name: match[]
+        value: '{job="exporters",instance=~"{$CSP_INSTANCE}.*"}'
+      ssl_cert_file: '{$SSL_CERT}'
+      ssl_key_file: '{$SSL_KEY}'
+      triggers:
+      - uuid: a8542cc5f8974c70858fec7835d6edb7
+        expression: nodata(/BI.ZONE Secure SD-WAN. CSP-controller template/get.csp.metrics,5m)=1
+        name: HostDown
+        priority: HIGH
+        description: Failed to fetch system metrics from host in time.
+        manual_close: 'YES'
+    - uuid: 6ddc7c0efb71430694bb89f15e78271d
+      name: Get services metrics
+      type: HTTP_AGENT
+      key: get.svc.metrics
+      history: '0'
+      trends: '0'
+      value_type: TEXT
+      timeout: 30s
+      url: '{$PROTO}://mon.{$DOMAIN}/mon/cpe-metrics'
+      query_fields:
+      - name: match[]
+        value: '{job="services",instance=~"{$CSP_INSTANCE}"}'
+      ssl_cert_file: '{$SSL_CERT}'
+      ssl_key_file: '{$SSL_KEY}'
+    discovery_rules:
+    - uuid: bfc494740a0b49de96b853c4b824cd3d
+      name: CPE discovery
+      type: DEPENDENT
+      key: csp.get.list.cpe.discov
+      delay: '0'
+      item_prototypes:
+      - uuid: ee754aa0fc87434f88b9a0a54c210c39
+        name: 'CPE status: {#CPE_NAME}'
+        type: DEPENDENT
+        key: cpe.status.list[{#CPE_NAME}, {#CPE_ID}]
+        delay: '0'
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - up{cpe_id=~"{#CPE_ID}"}
+          - value
+          - ''
+        master_item:
+          key: get.cpe.list
+      host_prototypes:
+      - uuid: ffe842fe8e8b40dd81183d33ba43185b
+        host: '{#CPE_NAME}'
+        name: '{#CPE_NAME}'
+        group_links:
+        - group:
+            name: BI.ZONE Secure SD-WAN
+        templates:
+        - name: BI.ZONE Secure SD-WAN. CyberEdge
+        macros:
+        - macro: '{$CPE_ID}'
+          value: '{#CPE_ID}'
+        - macro: '{$CPE_NAME}'
+          value: '{#CPE_NAME}'
+      master_item:
+        key: get.cpe.list
+      lld_macro_paths:
+      - lld_macro: '{#CPE_ID}'
+        path: $.labels['cpe_id']
+      - lld_macro: '{#CPE_NAME}'
+        path: $.labels['cpe_name']
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^up$"}'
+    - uuid: b2cf654589984d7a8eae8887cc42a32e
+      name: Network interface discovery
+      type: DEPENDENT
+      key: csp.net.if.discov
+      delay: '0'
+      filter:
+        evaltype: AND
+        conditions:
+        - macro: '{#IFNAME}'
+          value: '{$NET.IF.IFNAME.MATCHES}'
+          formulaid: A
+        - macro: '{#IFNAME}'
+          value: '{$NET.IF.IFNAME.NOT_MATCHES}'
+          operator: NOT_MATCHES_REGEX
+          formulaid: B
+      description: Discovery of network interfaces. Requires node_exporter v0.18 and up.
+      item_prototypes:
+      - uuid: 6613a4228fe64a47b3b3b8e8f08ac6e3
+        name: 'Interface {#IFNAME}: Inbound packets drops'
+        type: DEPENDENT
+        key: net.if.in.drops[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_receive_drop_total{device="{#IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: 4cd8e2c7044841d8a14dccef44daeda3
+        name: 'Interface {#IFNAME}: Inbound packets with errors'
+        type: DEPENDENT
+        key: net.if.in.errors[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_receive_errs_total{device="{#IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+        trigger_prototypes:
+        - uuid: ad722902bf2d4a99b34ad004f80c1372
+          expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/net.if.in.errors[{#IFNAME}],#5)>0
+          name: HostNetworkErrorsIN
+          priority: WARNING
+      - uuid: 71b72b1be61643fd8de8e1c7f608e161
+        name: 'Interface {#IFNAME}:  Inbound error and drop rate'
+        type: CALCULATED
+        key: net.if.in.error_drop_rate[{#IFNAME}]
+        history: 7d
+        value_type: FLOAT
+        units: '%'
+        params: (last(//net.if.in.drops[{#IFNAME}]) + last(//net.if.in.errors[{#IFNAME}])) / (last(//net.if.in.packets[{#IFNAME}])
+          + count(//net.if.in.packets[{#IFNAME}],#1,"eq",0)) * 100
+      - uuid: f4ed5da7cd174d68a4a3423e0a986686
+        name: 'Interface {#IFNAME}: Inbound packets traffic'
+        type: DEPENDENT
+        key: net.if.in.packets[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_receive_packets_total{device="{#IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: c9bd84309ba84ccb8deb9ff2638b968f
+        name: 'Interface {#IFNAME}: Bits received'
+        type: DEPENDENT
+        key: net.if.in[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        units: bps
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_receive_bytes_total{device="{#IFNAME}"}
+          - value
+          - ''
+        - type: MULTIPLIER
+          parameters:
+          - '8'
+        master_item:
+          key: get.csp.metrics
+      - uuid: 435ee1d975154f93b95ccbbc8f7c712e
+        name: 'Interface {#IFNAME}: Outbound packets drops'
+        type: DEPENDENT
+        key: net.if.out.drops[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_transmit_drop_total{device="{#IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: 25a23414f3a84f67b9ccf2bcaa41dfa8
+        name: 'Interface {#IFNAME}: Outbound packets with errors'
+        type: DEPENDENT
+        key: net.if.out.errors[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_transmit_errs_total{device="{#IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+        trigger_prototypes:
+        - uuid: 899058ea546d4fed865c1af486d84dab
+          expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/net.if.out.errors[{#IFNAME}],#5)>0
+          name: HostNetworkErrorsOUT
+          priority: WARNING
+      - uuid: 3d12030f0cdd42a8b0b9e7fa241c59bc
+        name: 'Interface {#IFNAME}:  Outbound error and drop rate'
+        type: CALCULATED
+        key: net.if.out.error_drop_rate[{#IFNAME}]
+        history: 7d
+        value_type: FLOAT
+        units: '%'
+        params: (last(//net.if.out.drops[{#IFNAME}]) + last(//net.if.out.errors[{#IFNAME}])) / (last(//net.if.out.packets[{#IFNAME}])
+          + count(//net.if.out.packets[{#IFNAME}],#1,"eq",0) ) * 100
+      - uuid: 1623420c39eb468495e3802e9a30d740
+        name: 'Interface {#IFNAME}: Outbound packets traffic'
+        type: DEPENDENT
+        key: net.if.out.packets[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_transmit_packets_total{device="{#IFNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: 68a3183b2485469aa9ba697f0adf02cf
+        name: 'Interface {#IFNAME}: Bits sent'
+        type: DEPENDENT
+        key: net.if.out[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        units: bps
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_transmit_bytes_total{device="{#IFNAME}"}
+          - value
+          - ''
+        - type: MULTIPLIER
+          parameters:
+          - '8'
+        master_item:
+          key: get.csp.metrics
+      - uuid: 8fff3bae3f934a3fa227a96fb0c14255
+        name: 'Interface {#IFNAME}: Speed max'
+        type: DEPENDENT
+        key: net.if.speed.max[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        units: bps
+        description: Sets value to 0 if metric is missing in node_exporter output.
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_speed_bytes{device="{#IFNAME}"}
+          - value
+          - ''
+          error_handler: CUSTOM_VALUE
+          error_handler_params: '125000000'
+        - type: MULTIPLIER
+          parameters:
+          - '8'
+        - type: IN_RANGE
+          parameters:
+          - '0'
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: 61a9f91fb0c24bda88b1b8136b7d4164
+        name: 'Interface {#IFNAME}: Utilization'
+        type: CALCULATED
+        key: net.if.speed.util[{#IFNAME}]
+        history: 7d
+        value_type: FLOAT
+        units: '%'
+        params: last(//net.if.speed[{#IFNAME}]) / last(//net.if.speed.max[{#IFNAME}]) * 100
+      - uuid: e4b1d9539df64172990de9de4c25c7b0
+        name: 'Interface {#IFNAME}: Speed'
+        type: DEPENDENT
+        key: net.if.speed[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        units: bps
+        description: Sets value to 0 if metric is missing in node_exporter output.
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_speed_bytes{device="{#IFNAME}"}
+          - value
+          - ''
+          error_handler: CUSTOM_VALUE
+          error_handler_params: '0'
+        - type: MULTIPLIER
+          parameters:
+          - '8'
+        master_item:
+          key: get.csp.metrics
+      - uuid: 918feb54ec2d4a54830fa28ed135d7f0
+        name: 'Interface {#IFNAME}: State'
+        type: DEPENDENT
+        key: net.if.status[{#IFNAME}]
+        delay: '0'
+        history: 7d
+        trends: '0'
+        value_type: TEXT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_network_info{device="{#IFNAME}"}
+          - label
+          - operstate
+        master_item:
+          key: get.csp.metrics
+      graph_prototypes:
+      - uuid: 97c9e35c62014d2db5af897cf66d06ca
+        name: 'Interface {#IFNAME}({#IFALIAS}): Network traffic'
+        graph_items:
+        - sortorder: '1'
+          color: 1A7C11
+          item:
+            host: BI.ZONE Secure SD-WAN. CSP-controller template
+            key: net.if.out[{#IFNAME}]
+        - sortorder: '2'
+          color: F63100
+          item:
+            host: BI.ZONE Secure SD-WAN. CSP-controller template
+            key: net.if.in[{#IFNAME}]
+        - sortorder: '3'
+          color: 2774A4
+          yaxisside: RIGHT
+          item:
+            host: BI.ZONE Secure SD-WAN. CSP-controller template
+            key: net.if.in.errors[{#IFNAME}]
+        - sortorder: '4'
+          color: A54F10
+          yaxisside: RIGHT
+          item:
+            host: BI.ZONE Secure SD-WAN. CSP-controller template
+            key: net.if.out.errors[{#IFNAME}]
+      master_item:
+        key: get.csp.metrics
+      lld_macro_paths:
+      - lld_macro: '{#HELP}'
+        path: $.help
+      - lld_macro: '{#IFNAME}'
+        path: $.labels.device
+      - lld_macro: '{#IFOPERSTATUS}'
+        path: $.labels.operstate
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_network_info$"}'
+    - uuid: 6ffb6168a8394d3ca2a656d18543a8be
+      name: Service discovery
+      type: DEPENDENT
+      key: csp.services.discov
+      delay: '0'
+      filter:
+        evaltype: OR
+        conditions:
+        - macro: '{#SERVICE_NAME}'
+          value: '{$SERVICE_LIST_01}'
+          formulaid: A
+        - macro: '{#SERVICE_NAME}'
+          value: '{$SERVICE_LIST_02}'
+          formulaid: B
+        - macro: '{#SERVICE_NAME}'
+          value: '{$SERVICE_LIST_03}'
+          formulaid: C
+        - macro: '{#SERVICE_NAME}'
+          value: '{$SERVICE_LIST_04}'
+          formulaid: D
+        - macro: '{#SERVICE_NAME}'
+          value: '{$SERVICE_LIST_05}'
+          formulaid: E
+        - macro: '{#SERVICE_NAME}'
+          value: '{$SERVICE_LIST_06}'
+          formulaid: F
+      item_prototypes:
+      - uuid: 898bcdd9e56440a8a47ad1e6ee384d59
+        name: Auto-restart counter of {#SERVICE_NAME}
+        type: DEPENDENT
+        key: csp.rst.auto.count.service[{#SERVICE_NAME}]
+        delay: '0'
+        history: 7d
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - docker_container_restart_count{name="{#SERVICE_NAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+        trigger_prototypes:
+        - uuid: 6a1d9b32a1aa48aa98c2067278ef5f46
+          expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.rst.auto.count.service[{#SERVICE_NAME}],#1)
+            > avg(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.rst.auto.count.service[{#SERVICE_NAME}],#5)
+          name: HostServiceIsRestarting
+          priority: HIGH
+          description: Service {#SERVICE_NAME} is restarting for last 5 minute
+      - uuid: a7431ecb9feb404f88789c6274320b91
+        name: Status of {#SERVICE_NAME}
+        type: DEPENDENT
+        key: csp.stat.service[{#SERVICE_NAME}]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - docker_container_running_state{name="{#SERVICE_NAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      trigger_prototypes:
+      - uuid: 59ba3308b7d04da885f31c6b2bda09aa
+        expression: 'last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.stat.service[{#SERVICE_NAME}],#1)
+          - last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.node.master, #1) < 0'
+        name: HostServiceIsDown
+        priority: HIGH
+        description: Service {#SERVICE_NAME} in DOWN state for last 5 minute
+        manual_close: 'YES'
+      master_item:
+        key: get.csp.metrics
+      lld_macro_paths:
+      - lld_macro: '{#SERVICE_NAME}'
+        path: $.labels['name']
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"docker_container"}'
+      overrides:
+      - name: Set priority High
+        step: '1'
+        stop: STOP
+        filter:
+          conditions:
+          - macro: '{#SERVICE_NAME}'
+            value: net_tracker|acwsd|route|dcgw|so_renderer|sotm|soems|balancerint|balancerext|net_tracker|apigw|cpe_statusd|acmqsd|dnsmasq|acwsd|sorabbitmq|ntp_chrony|node_exporter|docker_exporter|mongo|redis|sodb|acdb
+            formulaid: A
+        operations:
+        - operationobject: TRIGGER_PROTOTYPE
+          operator: REGEXP
+          value: Down|Restarting
+          status: ENABLED
+          discover: DISCOVER
+          severity: HIGH
+          tags:
+          - tag: Severity
+            value: High
+      - name: Set priority Medium
+        step: '2'
+        stop: STOP
+        filter:
+          conditions:
+          - macro: '{#SERVICE_NAME}'
+            value: so_api|so_analytics_keeper|so_analytics_api|wi|acuirest|prometheusproxy|ws_msg_broker|us|wsbroker|so_clickhouse
+            formulaid: A
+        operations:
+        - operationobject: TRIGGER_PROTOTYPE
+          operator: REGEXP
+          value: Down|Restarting
+          status: ENABLED
+          discover: DISCOVER
+          severity: AVERAGE
+          tags:
+          - tag: Severity
+            value: Medium
+      - name: Set priority Warning
+        step: '3'
+        stop: STOP
+        filter:
+          conditions:
+          - macro: '{#SERVICE_NAME}'
+            value: apigw_audit|alertmanager|csp_manager|acuinotify|bss|cpe_uinotifyd|rabbitmq_exporter|toria|grafana|prometheusalertmanager|aria2|prometheus|mongodb_exporter|postgres_exporter|redis_exporter
+            formulaid: A
+        operations:
+        - operationobject: TRIGGER_PROTOTYPE
+          operator: REGEXP
+          value: Down|Restarting
+          status: ENABLED
+          discover: DISCOVER
+          severity: WARNING
+          tags:
+          - tag: Severity
+            value: Warning
+      - name: Set priority Low
+        step: '4'
+        stop: STOP
+        filter:
+          conditions:
+          - macro: '{#SERVICE_NAME}'
+            value: '{$SERVICE_LIST_01}|{$SERVICE_LIST_02}'
+            formulaid: A
+        operations:
+        - operationobject: TRIGGER_PROTOTYPE
+          operator: REGEXP
+          value: Down|Restarting
+          status: DISABLED
+          discover: DISCOVER
+          severity: INFO
+          tags:
+          - tag: Severity
+            value: Low
+    - uuid: 4cdb5e132a5345ee91b693d0474e9040
+      name: Block devices discovery
+      type: DEPENDENT
+      key: csp.vfs.dev.discov
+      delay: '0'
+      filter:
+        evaltype: AND
+        conditions:
+        - macro: '{#DEVNAME}'
+          value: '{$VFS.DEV.DEVNAME.MATCHES}'
+          formulaid: A
+        - macro: '{#DEVNAME}'
+          value: '{$VFS.DEV.DEVNAME.NOT_MATCHES}'
+          operator: NOT_MATCHES_REGEX
+          formulaid: B
+      item_prototypes:
+      - uuid: c8948d6e09454ddda3f6f1f5554c28e0
+        name: '{#DEVNAME}: Disk read request avg waiting time (r_await)'
+        type: CALCULATED
+        key: vfs.dev.read.await["{#DEVNAME}"]
+        history: 7d
+        value_type: FLOAT
+        units: '!ms'
+        params: (last(//vfs.dev.read.time.rate["{#DEVNAME}"])/(last(//vfs.dev.read.rate["{#DEVNAME}"])+(last(//vfs.dev.read.rate["{#DEVNAME}"])=0)))*1000*(last(//vfs.dev.read.rate["{#DEVNAME}"])
+          > 0)
+        description: This formula contains two boolean expressions that evaluates to 1 or 0 in order to set calculated
+          metric to zero and to avoid division by zero exception.
+      - uuid: 348d4c6a23774a899fd32a35b9271621
+        name: '{#DEVNAME}: Disk read rate'
+        type: DEPENDENT
+        key: vfs.dev.read.rate["{#DEVNAME}"]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        units: '!r/s'
+        description: r/s. The number (after merges) of read requests completed per second for the device.
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_disk_reads_completed_total{device="{#DEVNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: 6f9d50ba8d6d43a9b077815a78cd7632
+        name: '{#DEVNAME}: Disk read time (rate)'
+        type: DEPENDENT
+        key: vfs.dev.read.time.rate["{#DEVNAME}"]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Rate of total read time counter. Used in r_await calculation
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_disk_read_time_seconds_total{device="{#DEVNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: 69a023246e464e46b66e4397b6f53467
+        name: '{#DEVNAME}: Disk write request avg waiting time (w_await)'
+        type: CALCULATED
+        key: vfs.dev.write.await["{#DEVNAME}"]
+        history: 7d
+        value_type: FLOAT
+        units: '!ms'
+        params: (last(//vfs.dev.write.time.rate["{#DEVNAME}"])/(last(//vfs.dev.write.rate["{#DEVNAME}"])+(last(//vfs.dev.write.rate["{#DEVNAME}"])=0)))*1000*(last(//vfs.dev.write.rate["{#DEVNAME}"])
+          > 0)
+        description: This formula contains two boolean expressions that evaluates to 1 or 0 in order to set calculated
+          metric to zero and to avoid division by zero exception.
+      - uuid: b533488cb0e8456ca994d066d1ff7713
+        name: '{#DEVNAME}: Disk write rate'
+        type: DEPENDENT
+        key: vfs.dev.write.rate["{#DEVNAME}"]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        units: '!w/s'
+        description: w/s. The number (after merges) of write requests completed per second for the device.
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_disk_writes_completed_total{device="{#DEVNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: c50387ff103b49bf941c6b15fca91798
+        name: '{#DEVNAME}: Disk write time (rate)'
+        type: DEPENDENT
+        key: vfs.dev.write.time.rate["{#DEVNAME}"]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Rate of total write time counter. Used in w_await calculation
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - node_disk_write_time_seconds_total{device="{#DEVNAME}"}
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      trigger_prototypes:
+      - uuid: ec2677080c754931a52419bd1b9ea091
+        expression: min(/BI.ZONE Secure SD-WAN. CSP-controller template/vfs.dev.read.await["{#DEVNAME}"],15m) >
+          {$VFS.DEV.READ.AWAIT.WARN:"{#DEVNAME}"} or min(/BI.ZONE Secure SD-WAN. CSP-controller template/vfs.dev.write.await["{#DEVNAME}"],15m)
+          > {$VFS.DEV.WRITE.AWAIT.WARN:"{#DEVNAME}"}
+        name: HostDiskRead/WriteTimeAreTooHigh
+        priority: WARNING
+        description: '{#DEVNAME}: Disk read/write request responses are too high (read > {$VFS.DEV.READ.AWAIT.WARN:"{#DEVNAME}"}
+          ms for 15m or write > {$VFS.DEV.WRITE.AWAIT.WARN:"{#DEVNAME}"} ms for 15m)'
+      master_item:
+        key: get.csp.metrics
+      lld_macro_paths:
+      - lld_macro: '{#DEVNAME}'
+        path: $.labels.device
+      - lld_macro: '{#HELP}'
+        path: $.help
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - node_disk_io_now{device=~".+"}
+    - uuid: f821bf4a26e14b4b8237cef08b236bdd
+      name: Mounted filesystem discovery
+      type: DEPENDENT
+      key: csp.vfs.fs.discov
+      delay: '0'
+      filter:
+        evaltype: AND
+        conditions:
+        - macro: '{#FSDEVICE}'
+          value: '{$VFS.FS.FSDEVICE.NOT_MATCHES}'
+          operator: NOT_MATCHES_REGEX
+          formulaid: A
+        - macro: '{#FSNAME}'
+          value: '{$VFS.FS.FSDEVICE.MATCHES}'
+          formulaid: B
+        - macro: '{#FSNAME}'
+          value: '{$VFS.FS.FSNAME.MATCHES}'
+          formulaid: C
+        - macro: '{#FSNAME}'
+          value: '{$VFS.FS.FSNAME.NOT_MATCHES}'
+          operator: NOT_MATCHES_REGEX
+          formulaid: D
+        - macro: '{#FSTYPE}'
+          value: '{$VFS.FS.FSTYPE.MATCHES}'
+          formulaid: E
+        - macro: '{#FSTYPE}'
+          value: '{$VFS.FS.FSTYPE.NOT_MATCHES}'
+          operator: NOT_MATCHES_REGEX
+          formulaid: F
+      description: Discovery of file systems of different types.
+      item_prototypes:
+      - uuid: 38ad6e54c63c47efa959bbd9f6f7ff31
+        name: '{#FSNAME}: Free space'
+        type: DEPENDENT
+        key: vfs.fs.free["{#FSNAME}"]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        units: B
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - '{__name__=~"^node_filesystem_avail(?:_bytes)?$", mountpoint="{#FSNAME}"}'
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: 336ff86f22d34f75a2e1a0b9fad341dc
+        name: '{#FSNAME}: Free inodes in %'
+        type: DEPENDENT
+        key: vfs.fs.inode.pfree["{#FSNAME}"]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        units: '%'
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - '{__name__=~"node_filesystem_files.*",mountpoint="{#FSNAME}"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            //count vfs.fs.inode.pfree
+            var inode_free;
+            var inode_total;
+            JSON.parse(value).forEach(function(metric) {
+              if (metric['name'] == 'node_filesystem_files'){
+                  inode_total = metric['value'];
+              } else if (metric['name'] == 'node_filesystem_files_free'){
+                  inode_free = metric['value'];
+              }
+            });
+            return (inode_free/inode_total)*100;
+        master_item:
+          key: get.csp.metrics
+      - uuid: 218aefa0fd054ee197da6842dc80defb
+        name: '{#FSNAME}: Space utilization %'
+        type: CALCULATED
+        key: vfs.fs.pused["{#FSNAME}"]
+        history: 7d
+        value_type: FLOAT
+        units: '%'
+        params: (last(//vfs.fs.used["{#FSNAME}"])/(last(//vfs.fs.total["{#FSNAME}"])))*100
+        description: Space utilization in % for {#FSNAME}
+        trigger_prototypes:
+        - uuid: 7f00524e94ad4e7289d68782b946a06b
+          expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/vfs.fs.pused["{#FSNAME}"],#5)>80
+          name: '{#FSNAME}: HostLowDiskSpace'
+          priority: WARNING
+          manual_close: 'YES'
+          dependencies:
+          - name: '{#FSNAME}: HostOutOfDiskSpace'
+            expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/vfs.fs.pused["{#FSNAME}"],#5)>90
+        - uuid: 8354524940f94903a13e711fe3f9e200
+          expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/vfs.fs.pused["{#FSNAME}"],#5)>90
+          name: '{#FSNAME}: HostOutOfDiskSpace'
+          priority: HIGH
+          manual_close: 'YES'
+      - uuid: 53a21d3db13c4e9fa918181886787987
+        name: '{#FSNAME}: Total space'
+        type: DEPENDENT
+        key: vfs.fs.total["{#FSNAME}"]
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        units: B
+        description: Total space in Bytes
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - '{__name__=~"^node_filesystem_size(?:_bytes)?$", mountpoint="{#FSNAME}"}'
+          - value
+          - ''
+        master_item:
+          key: get.csp.metrics
+      - uuid: 5f525f3fc37e48d88685c9b0616259bc
+        name: '{#FSNAME}: Used space'
+        type: CALCULATED
+        key: vfs.fs.used["{#FSNAME}"]
+        history: 7d
+        value_type: FLOAT
+        units: B
+        params: (last(//vfs.fs.total["{#FSNAME}"])-last(//vfs.fs.free["{#FSNAME}"]))
+        description: Used storage in Bytes
+      graph_prototypes:
+      - uuid: 201e1833fc274a428efc649030cc62a2
+        name: '{#FSNAME}: Disk space usage'
+        width: '600'
+        height: '340'
+        yaxismax: '0'
+        show_work_period: 'NO'
+        show_triggers: 'NO'
+        type: PIE
+        show_3d: 'YES'
+        graph_items:
+        - sortorder: '1'
+          color: 1A7C11
+          item:
+            host: BI.ZONE Secure SD-WAN. CSP-controller template
+            key: vfs.fs.total["{#FSNAME}"]
+        - sortorder: '2'
+          color: F63100
+          item:
+            host: BI.ZONE Secure SD-WAN. CSP-controller template
+            key: vfs.fs.used["{#FSNAME}"]
+      master_item:
+        key: get.csp.metrics
+      lld_macro_paths:
+      - lld_macro: '{#FSDEVICE}'
+        path: $.labels.device
+      - lld_macro: '{#FSNAME}'
+        path: $.labels.mountpoint
+      - lld_macro: '{#FSTYPE}'
+        path: $.labels.fstype
+      - lld_macro: '{#HELP}'
+        path: $.help
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^node_filesystem_size(?:_bytes)?$", mountpoint=~".+"}'
+    macros:
+    - macro: '{$CSP_INSTANCE}'
+      value: 172.31.254.1:9100
+    - macro: '{$DOMAIN}'
+      value: <example.com>
+    - macro: '{$NET.IF.IFNAME.MATCHES}'
+      value: ^.*$
+    - macro: '{$NET.IF.IFNAME.NOT_MATCHES}'
+      value: (^Software Loopback Interface|^NULL[0-9.]*$|^[Ll]o[0-9.]*$|^[Ss]ystem$|^Nu[0-9.]*$|^veth[0-9A-z]+$|docker[0-9]+|br-[a-z0-9]{12}|br-[a-z]{1,3}|^virbr[0-9])
+      description: Filter out loopbacks, nulls, docker veth links and docker0 bridge by default
+    - macro: '{$PROTO}'
+      value: https
+    - macro: '{$SERVICE_LIST_01}'
+      value: initdb_so|initdb_so_post|migratedb|so_analytics_ch_migrator
+      description: Tier 01
+    - macro: '{$SERVICE_LIST_02}'
+      value: loaddb
+      description: Tier 02
+    - macro: '{$SERVICE_LIST_03}'
+      value: docker_exporter|node_exporter|postgres_exporter|process_exporter|rabbitmq_exporter|redis_exporter
+      description: Tier 03
+    - macro: '{$SERVICE_LIST_04}'
+      value: csp_manager
+      description: Tier 04
+    - macro: '{$SERVICE_LIST_05}'
+      value: aria2|grafana|prometheus|prometheusalertmanager|toria
+      description: Tier 05
+    - macro: '{$SERVICE_LIST_06}'
+      value: acmqsd1|acmqsd2|actrackerd|acuinotify|acuirest|acwsd1|acwsd2|alertmanager|apigw|apigw_audit|balancerext|balancerint|bss|cpe_uinotifyd|dnsmasq|fqdn_resolver|fwsd|net_tracker|prometheusproxy|ravpn|so_analytics_api|so_analytics_keeper|so_api|so_ems|so_id_engine|so_renderer|so_tm|so_tm2|us|wi|wsbroker
+      description: Tier 06
+    - macro: '{$SSL_CERT}'
+      value: portal-cert.pem
+    - macro: '{$SSL_KEY}'
+      value: portal-key.pem
+    - macro: '{$VFS.DEV.DEVNAME.MATCHES}'
+      value: .+
+      description: This macro is used in block devices discovery. Can be overridden on the host or linked template
+        level
+    - macro: '{$VFS.DEV.DEVNAME.NOT_MATCHES}'
+      value: ^(loop[0-9]*|sd[a-z][0-9]+|nbd[0-9]+|sr[0-9]+|fd[0-9]+|dm-[0-9]+|ram[0-9]+|ploop[a-z0-9]+|md[0-9]*|hcp[0-9]*|zram[0-9]*)
+      description: This macro is used in block devices discovery. Can be overridden on the host or linked template
+        level
+    - macro: '{$VFS.DEV.READ.AWAIT.WARN}'
+      value: '20'
+      description: Disk read average response time (in ms) before the trigger would fire
+    - macro: '{$VFS.DEV.WRITE.AWAIT.WARN}'
+      value: '20'
+      description: Disk write average response time (in ms) before the trigger would fire
+    - macro: '{$VFS.FS.FSDEVICE.MATCHES}'
+      value: ^.+$
+    - macro: '{$VFS.FS.FSDEVICE.NOT_MATCHES}'
+      value: ^\s$
+    - macro: '{$VFS.FS.FSNAME.MATCHES}'
+      value: .+
+    - macro: '{$VFS.FS.FSNAME.NOT_MATCHES}'
+      value: ^(/dev|/sys|/run|/proc|.+/shm$)
+    - macro: '{$VFS.FS.FSTYPE.MATCHES}'
+      value: ^(btrfs|ext2|ext3|ext4|reiser|xfs|ffs|ufs|jfs|jfs2|vxfs|hfs|apfs|refs|ntfs|fat32|zfs)$
+    - macro: '{$VFS.FS.FSTYPE.NOT_MATCHES}'
+      value: ^\s$
+  triggers:
+  - uuid: 78804e2f9fc04ee4b7b3bbdb6e93d931
+    expression: last(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.cpu.switches,#5) / last(/BI.ZONE Secure
+      SD-WAN. CSP-controller template/csp.cpu.num) > 5000
+    name: HostContextSwitching
+    priority: WARNING
+  - uuid: 0119d603061e480c8023aac744652c9f
+    expression: min(/BI.ZONE Secure SD-WAN. CSP-controller template/csp.swap.pused,5m)>80 and last(/BI.ZONE
+      Secure SD-WAN. CSP-controller template/csp.swap.total)>0
+    name: HostSwapIsFillingUp
+    priority: WARNING
+    description: Swap space usage has remained above 80% for the last 5 minutes

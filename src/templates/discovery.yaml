@@ -1,0 +1,980 @@
+zabbix_export:
+  templates:
+  - uuid: 2fd35a64ef22435096f92dc667e757c7
+    template: BI.ZONE Secure SD-WAN. Discovery template
+    name: BI.ZONE Secure SD-WAN. Discovery template
+    groups:
+    - name: BI.ZONE Secure SD-WAN
+    items:
+    - uuid: 7a556567e9a546e998b6c6a81690e8c6
+      name: Get CPE list
+      type: HTTP_AGENT
+      key: get.cpe.list
+      history: '0'
+      trends: '0'
+      value_type: TEXT
+      timeout: 30s
+      url: '{$PROTO}://mon.{$DOMAIN}/mon/cpe-list'
+      ssl_cert_file: '{$SSL_CERT}'
+      ssl_key_file: '{$SSL_KEY}'
+    - uuid: 260ce1120d494015960c436052ab5326
+      name: Get CSP list
+      type: HTTP_AGENT
+      key: get.csp.list
+      history: '0'
+      trends: '0'
+      value_type: TEXT
+      timeout: 30s
+      url: '{$PROTO}://mon.{$DOMAIN}/mon/csp'
+      ssl_cert_file: '{$SSL_CERT}'
+      ssl_key_file: '{$SSL_KEY}'
+    - uuid: e7066f7cc8764797853d7368783b6bb7
+      name: 'CSP portal certificate: Get'
+      type: EXTERNAL
+      key: csp_ui_cert.sh[{$SSL_CERT},{$UI.CERT.CERT_DIR}]
+      delay: 1h
+      history: 7d
+      trends: '0'
+      value_type: TEXT
+      description: Reads portal PEM from Zabbix server local path {$UI.CERT.CERT_DIR}/{$SSL_CERT} (no network).
+        Requires csp_ui_cert.sh in ExternalScripts.
+      preprocessing:
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 6h
+    - uuid: 826810e9412141bbb29f319f567ce1a8
+      name: 'CSP portal certificate: Validation result'
+      type: DEPENDENT
+      key: csp.ui.cert.validation
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      description: 'Portal PEM validation: valid / invalid / valid-but-self-signed'
+      preprocessing:
+      - type: JSONPATH
+        parameters:
+        - $.result.value
+      master_item:
+        key: csp_ui_cert.sh[{$SSL_CERT},{$UI.CERT.CERT_DIR}]
+      triggers:
+      - uuid: 3c4b6d93e8784bb4aca8a0f55c6320ff
+        expression: find(/BI.ZONE Secure SD-WAN. Discovery template/csp.ui.cert.validation,,"like","invalid")=1
+          and last(/BI.ZONE Secure SD-WAN. Discovery template/csp.ui.cert.not_after)>=now() and {$UI.CERT.INVALID.ALERT}=1
+        name: UiCertInvalid
+        priority: HIGH
+        description: |-
+          Portal certificate file is invalid (not yet valid / broken). Enable only for custom certs via {$UI.CERT.INVALID.ALERT}=1 (default 0).
+
+          File: {$UI.CERT.CERT_DIR}/{$SSL_CERT}
+    - uuid: 592a3f05e3984039b1cca73b56d7715a
+      name: 'CSP portal certificate: Last validation status'
+      type: DEPENDENT
+      key: csp.ui.cert.message
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      description: Message from the latest portal certificate file check
+      preprocessing:
+      - type: JSONPATH
+        parameters:
+        - $.result.message
+      master_item:
+        key: csp_ui_cert.sh[{$SSL_CERT},{$UI.CERT.CERT_DIR}]
+    - uuid: ba74a5ccce71489c81d3af56df62f7bf
+      name: 'CSP portal certificate: Expires on'
+      type: DEPENDENT
+      key: csp.ui.cert.not_after
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: FLOAT
+      units: unixtime
+      description: notAfter of portal PEM on Zabbix server (Unix timestamp)
+      preprocessing:
+      - type: JSONPATH
+        parameters:
+        - $.x509.not_after.timestamp
+      master_item:
+        key: csp_ui_cert.sh[{$SSL_CERT},{$UI.CERT.CERT_DIR}]
+      triggers:
+      - uuid: 7e5aa50292eb44ca89f18dcae063eb39
+        expression: last(/BI.ZONE Secure SD-WAN. Discovery template/csp.ui.cert.not_after)<now()
+        name: UiCertExpired
+        priority: HIGH
+        description: |-
+          Portal certificate PEM has expired. Renew {$SSL_CERT} on Zabbix server (and matching key). Monitoring/mTLS to CSP will fail.
+
+          File: {$UI.CERT.CERT_DIR}/{$SSL_CERT}
+      - uuid: ecde2ab33be349acafb4f02d6158f5d0
+        expression: (last(/BI.ZONE Secure SD-WAN. Discovery template/csp.ui.cert.not_after)-now())/86400<{$UI.CERT.EXPIRY.WARN}
+          and last(/BI.ZONE Secure SD-WAN. Discovery template/csp.ui.cert.not_after)>=now()
+        name: UiCertExpiresSoon
+        priority: WARNING
+        description: |-
+          Portal certificate PEM expires in less than {$UI.CERT.EXPIRY.WARN} days. Renew {$SSL_CERT} before expiry.
+
+          File: {$UI.CERT.CERT_DIR}/{$SSL_CERT}
+        dependencies:
+        - name: UiCertExpired
+          expression: last(/BI.ZONE Secure SD-WAN. Discovery template/csp.ui.cert.not_after)<now()
+    - uuid: e613c0107649461b8499034140f395f6
+      name: 'CSP portal certificate: Issuer'
+      type: DEPENDENT
+      key: csp.ui.cert.issuer
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      description: Issuer of the portal PEM
+      preprocessing:
+      - type: JSONPATH
+        parameters:
+        - $.x509.issuer
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 1d
+      master_item:
+        key: csp_ui_cert.sh[{$SSL_CERT},{$UI.CERT.CERT_DIR}]
+    - uuid: e8fa2aaaaee14ab794b8f0be7c4dbaf3
+      name: 'CSP portal certificate: Subject'
+      type: DEPENDENT
+      key: csp.ui.cert.subject
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      description: Subject of the portal PEM
+      preprocessing:
+      - type: JSONPATH
+        parameters:
+        - $.x509.subject
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 1d
+      master_item:
+        key: csp_ui_cert.sh[{$SSL_CERT},{$UI.CERT.CERT_DIR}]
+    - uuid: 53b0ab7006114863ba06ee24969a86a8
+      name: 'RAVPN connections: online'
+      type: DEPENDENT
+      key: csp.ravpn.connections[online]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_connections with status=online across VPC and devices
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_connections{status="online"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: d6a5416360274de196388a03141dcd5c
+      name: 'RAVPN connections: offline'
+      type: DEPENDENT
+      key: csp.ravpn.connections[offline]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_connections with status=offline across VPC and devices
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_connections{status="offline"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: 124f9c0b41c4407dac035434c5f99ffa
+      name: 'RAVPN connections: unknown'
+      type: DEPENDENT
+      key: csp.ravpn.connections[unknown]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_connections with status=unknown across VPC and devices
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_connections{status="unknown"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: 517e8497c7cd4fff90e92a37bb4bbf1e
+      name: 'RAVPN connections: deleted'
+      type: DEPENDENT
+      key: csp.ravpn.connections[deleted]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_connections with status=deleted across VPC and devices
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_connections{status="deleted"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: 3063140a0c954c1786630b140605a39f
+      name: 'RAVPN peers: online'
+      type: DEPENDENT
+      key: csp.ravpn.peers[online]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_peers with status=online across VPC and devices
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_peers{status="online"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: c7dabf80ea5242d6b5403c8dd4459d1d
+      name: 'RAVPN peers: offline'
+      type: DEPENDENT
+      key: csp.ravpn.peers[offline]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_peers with status=offline across VPC and devices
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_peers{status="offline"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: c250ec65af05475c9ca74759a85b7d6e
+      name: 'RAVPN peers: unknown'
+      type: DEPENDENT
+      key: csp.ravpn.peers[unknown]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_peers with status=unknown across VPC and devices
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_peers{status="unknown"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: cac9f8d2026d4f06bc2201c975583430
+      name: 'RAVPN peers: deleted'
+      type: DEPENDENT
+      key: csp.ravpn.peers[deleted]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_peers with status=deleted across VPC and devices
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_peers{status="deleted"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: 753613afbd4d4b5fa0e7b1c42eb4aaa2
+      name: 'RAVPN users: online'
+      type: DEPENDENT
+      key: csp.ravpn.users[online]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_users with status=online across VPC
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_users{status="online"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: b558f06ed5df4b6e8b523411c6ddc450
+      name: 'RAVPN users: offline'
+      type: DEPENDENT
+      key: csp.ravpn.users[offline]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_users with status=offline across VPC
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_users{status="offline"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: 65a8ea597bab47aab3abf9817dc653a6
+      name: 'RAVPN users: inactive'
+      type: DEPENDENT
+      key: csp.ravpn.users[inactive]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_users with status=inactive across VPC
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_users{status="inactive"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: e459cc0cf00548ec85abb3ce310cb3c1
+      name: 'RAVPN devices: online'
+      type: DEPENDENT
+      key: csp.ravpn.devices[online]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_devices with status=online across VPC
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_devices{status="online"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: f5ce524b85304153a328e41609ca4641
+      name: 'RAVPN devices: offline'
+      type: DEPENDENT
+      key: csp.ravpn.devices[offline]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_devices with status=offline across VPC
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_devices{status="offline"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: 4cd4cc92319545c68fb8f1ec75f8ec57
+      name: 'RAVPN devices: inactive'
+      type: DEPENDENT
+      key: csp.ravpn.devices[inactive]
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      description: Sum of ravpn_devices with status=inactive across VPC
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - ravpn_devices{status="inactive"}
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var valueArr = JSON.parse(value);
+          if (!valueArr.length) {
+              return '';
+          }
+          return valueArr.reduce(function(acc,obj){
+             return acc + parseFloat(obj['value']);
+          },0);
+      master_item:
+        key: get.ravpn.metrics
+    - uuid: 851bb8f906ce41e994bf22a806fd18bb
+      name: 'RAVPN users: peak online'
+      type: CALCULATED
+      key: csp.ravpn.users.window
+      history: 7d
+      value_type: FLOAT
+      params: 'max(//csp.ravpn.users[online],{$RAVPN.USERS.WINDOW})'
+      description: Peak online RAVPN users over {$RAVPN.USERS.WINDOW}; not unique logins
+    - uuid: a7a9a900fa0f4d2bbda0ce0a3bbba2e4
+      name: Get RAVPN metrics
+      type: HTTP_AGENT
+      key: get.ravpn.metrics
+      history: '0'
+      trends: '0'
+      value_type: TEXT
+      timeout: 30s
+      url: '{$PROTO}://mon.{$DOMAIN}/mon/cpe-metrics'
+      query_fields:
+      - name: match[]
+        value: '{job="ravpn"}'
+      ssl_cert_file: '{$SSL_CERT}'
+      ssl_key_file: '{$SSL_KEY}'
+    discovery_rules:
+    - uuid: f71eda3deb154571ab734a539fc3d8ce
+      name: RAVPN VPC discovery
+      type: DEPENDENT
+      key: csp.ravpn.vpc.discov
+      delay: '0'
+      item_prototypes:
+      - uuid: 30b42d8f532d4f56aa7a16ea7906823c
+        name: 'RAVPN connections: online on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.connections[{#VPC_ID},online]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Sum of ravpn_connections status=online for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_connections{vpc_id="{#VPC_ID}",status="online"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 725de45e9a5c4eed82d4b6d07a6d5285
+        name: 'RAVPN connections: offline on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.connections[{#VPC_ID},offline]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Sum of ravpn_connections status=offline for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_connections{vpc_id="{#VPC_ID}",status="offline"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: c8183eae18eb475d97033358a4bf999a
+        name: 'RAVPN connections: unknown on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.connections[{#VPC_ID},unknown]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Sum of ravpn_connections status=unknown for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_connections{vpc_id="{#VPC_ID}",status="unknown"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 5c2605dd9f144d7c8e307376dbcf93aa
+        name: 'RAVPN connections: deleted on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.connections[{#VPC_ID},deleted]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Sum of ravpn_connections status=deleted for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_connections{vpc_id="{#VPC_ID}",status="deleted"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 17a19a64e7294336b68a1fdff148f236
+        name: 'RAVPN peers: online on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.peers[{#VPC_ID},online]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Sum of ravpn_peers status=online for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_peers{vpc_id="{#VPC_ID}",status="online"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: c6163b59058d42dfb0eec1f93497c15c
+        name: 'RAVPN peers: offline on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.peers[{#VPC_ID},offline]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Sum of ravpn_peers status=offline for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_peers{vpc_id="{#VPC_ID}",status="offline"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 99682ed7a8d84d018b828cebaa38fc60
+        name: 'RAVPN peers: unknown on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.peers[{#VPC_ID},unknown]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Sum of ravpn_peers status=unknown for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_peers{vpc_id="{#VPC_ID}",status="unknown"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 21c644365f0a4a94a94f603b6355bb37
+        name: 'RAVPN peers: deleted on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.peers[{#VPC_ID},deleted]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: Sum of ravpn_peers status=deleted for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_peers{vpc_id="{#VPC_ID}",status="deleted"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: db71ab4f22e144c7987608807a42bb4a
+        name: 'RAVPN users: online on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.users[{#VPC_ID},online]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: ravpn_users status=online for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_users{vpc_id="{#VPC_ID}",status="online"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 40939306735e4157bdef1636fd294485
+        name: 'RAVPN users: offline on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.users[{#VPC_ID},offline]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: ravpn_users status=offline for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_users{vpc_id="{#VPC_ID}",status="offline"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 39e23a9edd8a44b484c893b11e213270
+        name: 'RAVPN users: inactive on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.users[{#VPC_ID},inactive]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: ravpn_users status=inactive for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_users{vpc_id="{#VPC_ID}",status="inactive"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 409e8c9b5a49421699e285c5e76fd676
+        name: 'RAVPN devices: online on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.devices[{#VPC_ID},online]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: ravpn_devices status=online for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_devices{vpc_id="{#VPC_ID}",status="online"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 06910a97daeb4e0081c8467a81aa8f9a
+        name: 'RAVPN devices: offline on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.devices[{#VPC_ID},offline]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: ravpn_devices status=offline for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_devices{vpc_id="{#VPC_ID}",status="offline"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      - uuid: 1a015eb42ff34eb894f673ca5fc13349
+        name: 'RAVPN devices: inactive on {#VPC_ID}'
+        type: DEPENDENT
+        key: 'csp.ravpn.devices[{#VPC_ID},inactive]'
+        delay: '0'
+        history: 7d
+        value_type: FLOAT
+        description: ravpn_devices status=inactive for this VPC
+        preprocessing:
+        - type: PROMETHEUS_TO_JSON
+          parameters:
+          - 'ravpn_devices{vpc_id="{#VPC_ID}",status="inactive"}'
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var valueArr = JSON.parse(value);
+            if (!valueArr.length) {
+                return '';
+            }
+            return valueArr.reduce(function(acc,obj){
+               return acc + parseFloat(obj['value']);
+            },0);
+        master_item:
+          key: get.ravpn.metrics
+      master_item:
+        key: get.ravpn.metrics
+      lld_macro_paths:
+      - lld_macro: '{#VPC_ID}'
+        path: $.labels['vpc_id']
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^ravpn_(connections|peers|users|devices)$",vpc_id=~".+"}'
+      - type: JAVASCRIPT
+        parameters:
+        - |-
+          var rows = JSON.parse(value);
+          var seen = {};
+          var result = [];
+          rows.forEach(function(row) {
+              var id = row.labels.vpc_id;
+              var key = '$' + id;
+              if (id && !seen[key]) {
+                  seen[key] = true;
+                  result.push({labels: {vpc_id: id}});
+              }
+          });
+          return JSON.stringify(result);
+    - uuid: 0893fe32e3c04ec6acb6be15eef0dcbf
+      name: CPE discovery
+      type: DEPENDENT
+      key: csp.get.list.cpe.discov
+      delay: '0'
+      host_prototypes:
+      - uuid: 1715b99c98824b349222299efc248724
+        host: '{#CPE_NAME}'
+        name: '{#CPE_NAME}'
+        group_links:
+        - group:
+            name: BI.ZONE Secure SD-WAN
+        templates:
+        - name: BI.ZONE Secure SD-WAN. CyberEdge
+        macros:
+        - macro: '{$CPE_ID}'
+          value: '{#CPE_ID}'
+        - macro: '{$CPE_NAME}'
+          value: '{#CPE_NAME}'
+      master_item:
+        key: get.cpe.list
+      lld_macro_paths:
+      - lld_macro: '{#CPE_ID}'
+        path: $.labels['cpe_id']
+      - lld_macro: '{#CPE_NAME}'
+        path: $.labels['cpe_name']
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__=~"^up$"}'
+    - uuid: 34a62c5e811644b6aaf7441af9cbe220
+      name: CSP discovery
+      type: DEPENDENT
+      key: csp.get.list.csp.discov
+      delay: '0'
+      host_prototypes:
+      - uuid: 455adc98d8334d91934dee4555c59582
+        host: '{#CSP_NODE}'
+        name: '{#CSP_NODE}'
+        group_links:
+        - group:
+            name: BI.ZONE Secure SD-WAN
+        templates:
+        - name: BI.ZONE Secure SD-WAN. CSP-controller template
+        macros:
+        - macro: '{$CSP_INSTANCE}'
+          value: '{{#CSP_INSTANCE}.regsub("((?:[0-9]{1,3}\.){3}[0-9]{1,3}):([0-9]+)", \1)}'
+      master_item:
+        key: get.csp.list
+      lld_macro_paths:
+      - lld_macro: '{#CSP_INSTANCE}'
+        path: $.labels['instance']
+      - lld_macro: '{#CSP_NODE}'
+        path: $.labels['nodename']
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - '{__name__="node_uname_info"}'
+    macros:
+    - macro: '{$DOMAIN}'
+      value: <example.com>
+    - macro: '{$PROTO}'
+      value: https
+    - macro: '{$RAVPN.USERS.WINDOW}'
+      value: 1h
+      description: Peak online RAVPN users lookback; override with 24h for a daily peak
+    - macro: '{$SSL_CERT}'
+      value: portal-cert.pem
+    - macro: '{$SSL_KEY}'
+      value: portal-key.pem
+    - macro: '{$UI.CERT.CERT_DIR}'
+      value: /var/lib/zabbix/ssl/certs
+      description: Directory with portal PEM on Zabbix server/proxy. Docker default shown; override if paths differ
+    - macro: '{$UI.CERT.EXPIRY.WARN}'
+      value: '14'
+      description: Days before portal PEM expiry to raise UiCertExpiresSoon
+    - macro: '{$UI.CERT.INVALID.ALERT}'
+      value: '0'
+      description: 'Enable UiCertInvalid for custom portal certs: 1=on, 0=off'
+  graphs:
+  - uuid: 1745a341a20d4ad8819d3ee9eec8ea90
+    name: RAVPN users
+    graph_items:
+    - sortorder: '1'
+      color: 1A7C11
+      item:
+        host: BI.ZONE Secure SD-WAN. Discovery template
+        key: csp.ravpn.users[online]
+    - sortorder: '2'
+      color: F63100
+      item:
+        host: BI.ZONE Secure SD-WAN. Discovery template
+        key: csp.ravpn.users[offline]
+    - sortorder: '3'
+      color: 2774A4
+      item:
+        host: BI.ZONE Secure SD-WAN. Discovery template
+        key: csp.ravpn.users[inactive]

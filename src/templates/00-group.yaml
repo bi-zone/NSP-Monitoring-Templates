@@ -1,0 +1,8 @@
+# version — формат экспорта Zabbix (сейчас только 6.0). date — служебная метка
+# XML, не версия продукта; фиксирована, чтобы сборка не меняла git без правок.
+zabbix_export:
+  version: '6.0'
+  date: '2025-11-06T08:35:37Z'
+  groups:
+  - uuid: b716ff295dab4f918d276825f8002f86
+    name: BI.ZONE Secure SD-WAN
