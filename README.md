@@ -1,0 +1,1 @@
+# NSP-Monitoring-Templates
